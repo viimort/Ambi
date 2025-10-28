@@ -9,11 +9,34 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css" />
+  <style>
+    .hero {
+      position: relative;
+      overflow: hidden;
+    }
+    .hero-photo {
+      width: 100%;
+      height: 100vh;
+      object-fit: cover;
+      position: absolute;
+      top: 0;
+      left: 0;
+      transition: opacity 2s ease-in-out;
+    }
+    .overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.25);
+    }
+  </style>
 </head>
 <body>
   <header class="hero" id="inicio">
     <div class="overlay"></div>
-    <img class="hero-photo" src="assets/ambar_3.jpg" alt="Ámbar"/>
+    <img class="hero-photo" id="heroPhoto" src="assets/ambar_1.jpg" alt="Ámbar"/>
     <div class="hero-text">
       <h1>¡Acompañame a celebrar mis 15!</h1>
       <h2>Ámbar Marco</h2>
@@ -35,17 +58,10 @@
         <li><strong>Salón:</strong> Janos House</li>
         <li><strong>Dirección:</strong> Domingo Faustino Sarmiento 4539, José C. Paz</li>
         <li><strong>Horario:</strong> 21:30 a 05:30 hs</li>
-        <li><strong>Dress code:</strong> Elegante · Evitar verde, plateado,beige y azul marino</li>
+        <li><strong>Dress code:</strong> Elegante · Evitar verde, plateado, beige y azul marino</li>
       </ul>
       <div class="actions">
         <a class="btn" target="_blank" href="https://www.google.com/maps?q=Domingo+Faustino+Sarmiento+4539%2C+Jos%C3%A9+C.+Paz">Cómo llegar</a>
-        </div>
-    </section>
-
-    <section id="galeria" class="gallery card">
-      <h3>Álbum</h3>
-      <div class="grid">
-        <img src="assets/ambar_2.jpg" alt="Ámbar 2" loading="lazy"/>
       </div>
     </section>
 
@@ -82,7 +98,6 @@
         <button class="btn primary" type="submit">Confirmar asistencia</button>
         <p id="formMsg" class="form-msg" role="status" aria-live="polite"></p>
       </form>
-      <p class="hint"></p>
     </section>
   </main>
 
@@ -91,8 +106,74 @@
   </footer>
 
   <script>
-    const EVENT_ISO = "2025-12-12T21:30:00-03:00"; // Buenos Aires time
+    // ROTACIÓN DE FONDO
+    const fotos = [
+      'assets/ambar_1.jpg',
+      'assets/ambar_2.jpg',
+      'assets/ambar_3.png'
+    ];
+    let indice = 0;
+    const hero = document.getElementById('heroPhoto');
+    setInterval(() => {
+      indice = (indice + 1) % fotos.length;
+      hero.style.opacity = 0;
+      setTimeout(() => {
+        hero.src = fotos[indice];
+        hero.style.opacity = 1;
+      }, 1000);
+    }, 6000); // cambia cada 6 segundos
+
+    // COUNTDOWN
+    const EVENT_ISO = "2025-12-12T21:30:00-03:00";
+    const countdown = () => {
+      const eventDate = new Date(EVENT_ISO).getTime();
+      const now = new Date().getTime();
+      const diff = eventDate - now;
+      if (diff <= 0) return;
+      const d = Math.floor(diff / (1000*60*60*24));
+      const h = Math.floor((diff / (1000*60*60)) % 24);
+      const m = Math.floor((diff / (1000*60)) % 60);
+      const s = Math.floor((diff / 1000) % 60);
+      document.getElementById("d").innerText = d;
+      document.getElementById("h").innerText = h;
+      document.getElementById("m").innerText = m;
+      document.getElementById("s").innerText = s;
+    };
+    setInterval(countdown, 1000);
+
+    // FORMULARIO → Firebase
+    const firebaseConfig = {
+      apiKey: "TU_API_KEY",
+      authDomain: "TU_DOMINIO.firebaseapp.com",
+      databaseURL: "https://TU_PROYECTO.firebaseio.com",
+      projectId: "TU_PROYECTO",
+      storageBucket: "TU_PROYECTO.appspot.com",
+      messagingSenderId: "TU_ID",
+      appId: "TU_APP_ID"
+    };
+    const app = firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    document.getElementById("rsvpForm").addEventListener("submit", (e) => {
+      e.preventDefault();
+      const data = {
+        nombre: nombre.value,
+        asiste: asiste.value,
+        restriccion: restriccion.value,
+        cancion: cancion.value,
+        fecha: new Date().toISOString()
+      };
+      db.ref("confirmaciones").push(data)
+        .then(() => {
+          formMsg.textContent = "✅ ¡Gracias por confirmar!";
+          rsvpForm.reset();
+        })
+        .catch(() => formMsg.textContent = "❌ Error al enviar.");
+    });
   </script>
-  <script src="script.js"></script>
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 </body>
 </html>
